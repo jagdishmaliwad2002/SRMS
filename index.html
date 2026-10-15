@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1d5fd8">
+<title>SRMS Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#1d5fd8;--bg:#f3f6fb;--text:#1c2438;--muted:#7a8499;--line:#e8ecf3;--green:#16a34a;--red:#e5484d;--orange:#f59e0b;--purple:#7c4dff}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px}
+.menu a:focus-visible{outline-offset:-2px}
+.backdrop{display:none;position:fixed;inset:0;background:rgba(20,30,60,.45);z-index:25}
+body{font-family:'Poppins',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13px;display:flex;min-height:100vh}
+a{color:inherit;text-decoration:none;cursor:pointer}
+button{font:inherit;cursor:pointer}
+.sidebar{width:210px;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;height:100dvh;transition:margin .25s;z-index:30}
+body.collapsed .sidebar{margin-left:-210px}
+.brand{background:linear-gradient(180deg,#1d5fd8,#0f3fa8);color:#fff;text-align:center;padding:22px 10px 20px}
+.brand .logo{font-size:30px}.brand h1{font-size:20px;font-weight:700}
+.brand p{font-size:11px;opacity:.9;margin-top:4px;line-height:1.4}
+.menu{padding:12px;display:flex;flex-direction:column;gap:2px;flex:1;overflow:auto}
+.menu a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;color:#3b4560;font-weight:500}
+.menu a:hover{background:#eef3fd}.menu a.active{background:var(--blue);color:#fff}
+.menu .ic{width:18px;text-align:center}
+.logout{padding:16px 24px;border-top:1px solid var(--line);color:var(--red);font-weight:500;display:flex;gap:12px;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{background:#fff;height:62px;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.topbar h2{font-size:16px;font-weight:600;flex:1}
+.burger{font-size:20px;background:none;border:0}
+.searchwrap{position:relative}
+.search{background:#eef1f7;border-radius:8px;padding:9px 14px;width:260px;display:flex;gap:8px}
+.search input{border:0;background:none;outline:none;width:100%;font:inherit}
+.drop{position:absolute;top:calc(100% + 8px);right:0;background:#fff;border-radius:10px;box-shadow:0 8px 28px rgba(30,50,100,.18);width:320px;max-height:360px;overflow:auto;display:none;padding:6px}
+.drop.open{display:block}
+.drop a,.drop .empty{display:block;padding:9px 12px;border-radius:8px;font-size:12px}
+.drop a:hover{background:#eef3fd}.drop small{color:var(--muted);display:block}
+.drop .unread{border-left:3px solid var(--blue)}
+.bell{position:relative;font-size:18px;background:none;border:0}
+.bell b{position:absolute;top:-6px;right:-6px;background:var(--blue);color:#fff;font-size:9px;border-radius:50%;width:15px;height:15px;display:grid;place-items:center}
+.bell b.zero{display:none}
+.user{display:flex;align-items:center;gap:10px;cursor:pointer}
+.avatar{width:36px;height:36px;border-radius:50%;background:#cfe0ff;display:grid;place-items:center;font-size:18px}
+.user .info{min-width:0}.user small{display:block;color:var(--muted);font-size:11px}.user strong{font-size:12.5px;font-weight:600}
+.content{padding:20px 24px;display:flex;flex-direction:column;gap:18px;flex:1;width:100%;max-width:1560px;margin:0 auto}
+.card{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(30,50,100,.06);padding:18px}
+.card h3{font-size:13.5px;font-weight:600}
+.head{flex-wrap:wrap;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
+.head>a{color:var(--blue);font-size:11px;font-weight:500}
+.welcome{background:linear-gradient(90deg,#e4eeff,#d9e8ff);border-radius:12px;padding:22px 28px;display:flex;justify-content:space-between;align-items:center}
+.welcome p{font-size:15px;font-weight:500}.welcome h2{font-size:24px;color:var(--blue);margin:2px 0 4px}
+.welcome small{color:var(--muted)}.welcome .art{font-size:64px;letter-spacing:-6px}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.stat{display:flex;align-items:center;gap:14px;padding:16px;cursor:pointer;transition:transform .15s}
+.stat:hover{transform:translateY(-2px)}
+.stat .ico{width:50px;height:50px;border-radius:10px;display:grid;place-items:center;font-size:24px;flex-shrink:0}
+.stat small{color:var(--muted);font-size:11.5px}.stat strong{display:block;font-size:22px;line-height:1.2}.stat span{font-size:11px;font-weight:600}
+.row2{display:grid;grid-template-columns:1.75fr 1fr;gap:18px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:460px}
+th{text-align:left;background:#f5f7fb;color:var(--muted);font-weight:500;font-size:11.5px;padding:9px 10px;white-space:nowrap}
+td{padding:11px 10px;border-bottom:1px solid var(--line);font-size:12px}
+tr:last-child td{border:0}td:first-child{font-weight:600}
+.grade{padding:2px 9px;border-radius:5px;font-weight:600;font-size:11px;background:#dcf5e5;color:var(--green)}
+.grade.b{background:#e0ecff;color:var(--blue)}
+.notice{display:flex;gap:12px;padding:10px;border-radius:8px;cursor:pointer}
+.notice:hover{background:#f5f8ff}.notice.unread{background:#f0f5ff}
+.notice .n{width:38px;height:38px;border-radius:8px;background:#e6efff;display:grid;place-items:center;flex-shrink:0}
+.notice strong{font-size:12.5px}.notice p{font-size:11.5px;color:var(--muted)}.notice em{font-style:normal;color:var(--blue);font-size:11px;font-weight:500}
+.cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:600;font-size:12px}
+.cal-nav button{border:0;background:#eef3fd;border-radius:6px;width:26px;height:26px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;gap:4px 0;font-size:11px}
+.cal b{color:var(--muted);font-weight:500;padding-bottom:4px}
+.cal span{padding:5px 0;border-radius:6px;position:relative}
+.cal .off{color:#b7bfd0}.cal .sun{color:var(--red)}.cal .today{background:var(--blue);color:#fff}
+.cal .ev::after{content:'';position:absolute;bottom:1px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--orange)}
+.big .cal span{padding:14px 0;font-size:13px;background:#fafbfe}.big .cal .today{background:var(--blue)}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.quick a{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:10px;font-size:11px;font-weight:500;text-align:center;transition:transform .15s}
+.quick a:hover{transform:translateY(-2px)}.quick i{font-style:normal;font-size:20px}
+.perf{display:flex;align-items:center;gap:24px;justify-content:center;padding-top:6px}
+.donut{width:150px;height:150px;border-radius:50%;background:conic-gradient(#3fae49 0 60%,#2f6fe0 60% 80%,#f5b73b 80% 92%,#ef4f5a 92% 100%);display:grid;place-items:center;flex-shrink:0}
+.donut div{width:98px;height:98px;background:#fff;border-radius:50%;display:grid;place-content:center;text-align:center}
+.donut strong{font-size:22px;line-height:1}.donut small{font-size:10px;color:var(--muted)}
+.legend{display:flex;flex-direction:column;gap:12px;font-size:12px}
+.legend p{display:flex;align-items:center;gap:8px}.legend i{width:9px;height:9px;border-radius:50%}.legend b{margin-left:auto;padding-left:18px}
+.btn{background:var(--blue);color:#fff;border:0;border-radius:8px;padding:8px 16px;font-weight:500;font-size:12px}
+.btn.ghost{background:#eef3fd;color:var(--blue)}.btn.red{background:var(--red)}
+select,input.f,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;outline:none;width:100%}
+select{width:auto}select:focus,input.f:focus,textarea:focus{border-color:var(--blue)}
+.bar{background:#eef1f7;border-radius:6px;height:8px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;border-radius:6px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.form{display:flex;flex-direction:column;gap:12px;max-width:520px}
+.form label{font-weight:500;font-size:12px;display:flex;flex-direction:column;gap:5px}
+.tt td,.tt th{text-align:center;font-size:11.5px}.tt td:first-child{background:#f5f7fb}
+.stars span{font-size:24px;cursor:pointer;color:#cbd2e0}.stars span.on{color:var(--orange)}
+.modal{position:fixed;inset:0;background:rgba(20,30,60,.45);display:none;place-items:center;z-index:50}
+.modal.open{display:grid}.modal .box{background:#fff;border-radius:14px;padding:26px;width:320px;text-align:center}
+.modal .box p{margin:8px 0 18px;color:var(--muted)}.modal .box .btn{margin:0 4px}
+.toast{position:fixed;bottom:24px;right:24px;background:#1c2438;color:#fff;padding:12px 18px;border-radius:10px;opacity:0;transform:translateY(10px);transition:.25s;z-index:60;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+footer{display:flex;justify-content:space-between;padding:14px 24px;background:#fff;border-top:1px solid var(--line);color:var(--muted);font-size:11px}
+@media(min-width:761px) and (max-height:760px){.brand{padding:12px 10px}.brand .logo{font-size:24px}.brand p{display:none}.menu{padding:8px 12px}.menu a{padding:8px 12px}.logout{padding:12px 24px}}
+@media(min-width:1600px){body{font-size:14px}.sidebar{width:230px}body.collapsed .sidebar{margin-left:-230px}}
+@media(max-width:1400px){.content{padding:18px 20px}.row2{grid-template-columns:1.5fr 1fr}.perf{flex-direction:column;gap:16px}.donut{width:140px;height:140px}.donut div{width:92px;height:92px}.legend{width:100%;max-width:200px}}
+@media(max-width:1280px){.sidebar{width:196px}body.collapsed .sidebar{margin-left:-196px}.topbar{padding:0 18px;gap:14px}.search{width:210px}.stat{padding:12px;gap:10px}.stat .ico{width:40px;height:40px;font-size:20px}.stat strong{font-size:20px}.stat small{font-size:11px}.stats{gap:10px}.card{padding:16px}}
+@media(max-width:1180px){.stats{grid-template-columns:repeat(3,1fr)}.row3{grid-template-columns:1fr 1fr}.row3>.card:last-child{grid-column:span 2}.row3>.card:last-child .perf{flex-direction:row;justify-content:center;gap:28px}.legend{width:auto;max-width:none}}
+@media(max-width:980px){.row2,.row3{grid-template-columns:1fr}.row3>.card:last-child{grid-column:auto}}
+@media(max-width:760px){
+ .sidebar{position:fixed;left:0;top:0;width:230px;margin-left:-240px;transition:margin .25s,box-shadow .25s}
+ body.collapsed .sidebar{margin-left:-240px}
+ body.menu-open .sidebar{margin-left:0;box-shadow:0 0 40px rgba(0,0,0,.3)}
+ body.menu-open .backdrop{display:block}
+ .menu a{padding:13px 12px}
+ .topbar{height:auto;flex-wrap:wrap;gap:10px 14px;padding:10px 14px}
+ .topbar h2{font-size:15px}
+ .searchwrap{position:static}
+ .topbar>.searchwrap:nth-of-type(1){order:10;width:100%}
+ .search{width:100%}
+ .drop{left:12px;right:12px;width:auto;top:100%;margin-top:4px;max-height:60vh}
+ .user .info{display:none}
+ .content{padding:14px;gap:14px}
+ .card{padding:14px}
+ .welcome{padding:16px 18px}.welcome h2{font-size:20px}.welcome .art{display:none}
+ .stats{grid-template-columns:1fr 1fr;gap:10px}
+ .stat{padding:12px;gap:10px}.stat .ico{width:40px;height:40px;font-size:20px}.stat strong{font-size:19px}
+ .stat:last-child{grid-column:span 2}
+ .perf{flex-direction:column;gap:18px}
+ .quick{gap:8px}
+ .big .cal span{padding:10px 0;font-size:12px}
+ .form{max-width:100%}
+ input,select,textarea{font-size:16px!important}
+ .toast{left:12px;right:12px;bottom:16px;text-align:center}
+ footer{flex-direction:column;align-items:center;gap:4px;text-align:center;padding:12px}
+}
+@media(max-width:400px){.notice p{font-size:11px}.cal{font-size:10px}.quick a{font-size:10px}}
+</style>
+</head>
+<body>
+<div class="backdrop" id="backdrop"></div>
+<aside class="sidebar">
+  <div class="brand"><div class="logo">🎓</div><h1>SRMS</h1><p>Student Result<br>Management System</p></div>
+  <nav class="menu" id="menu"></nav>
+  <button class="logout" id="logoutBtn"><span>⏻</span>Logout</button>
+</aside>
+<div class="main">
+  <header class="topbar">
+    <button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+    <h2 id="title">Dashboard</h2>
+    <div class="searchwrap">
+      <label class="search">🔍<input id="q" placeholder="Search anything... (press /)" autocomplete="off"></label>
+      <div class="drop" id="qdrop"></div>
+    </div>
+    <div class="searchwrap">
+      <button class="bell" id="bell" aria-label="Notifications">🔔<b id="badge">3</b></button>
+      <div class="drop" id="bdrop"></div>
+    </div>
+    <div class="user" onclick="go('profile')"><div class="avatar">🧑</div><div class="info"><strong>Hello, Abhishek Verma</strong><small>B.Tech CSE - 3rd Year</small></div></div>
+  </header>
+  <main class="content" id="view"></main>
+  <footer><span>© 2024 Student Result Management System. All rights reserved.</span><span>Made with ❤️ for Students</span></footer>
+</div>
+<div class="modal" id="modal"><div class="box"><h3>Log out?</h3><p>You will need to sign in again to view your results.</p><button class="btn ghost" id="cancel">Cancel</button><button class="btn red" id="confirm">Logout</button></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const NAV=[['dashboard','Dashboard','▦'],['profile','Profile','👤'],['courses','Courses','📖'],['results','Results','📊'],['attendance','Attendance','📈'],['exams','Exams','📝'],['timetable','Timetable','🗓'],['notices','Notice Board','📢'],['calendar','Academic Calendar','📅'],['downloads','Downloads','⬇'],['feedback','Feedback','💬']];
+const RESULTS=[
+ ['Data Structures','Mid Sem','A',86,'2024-05-12'],['Database Management Systems','Mid Sem','A+',91,'2024-05-10'],
+ ['Operating Systems','Mid Sem','B+',78,'2024-05-08'],['Computer Networks','Mid Sem','A',84,'2024-05-06'],
+ ['Software Engineering','Mid Sem','A+',92,'2024-05-04'],['Data Structures','Quiz 2','A',88,'2024-04-20'],
+ ['Operating Systems','Quiz 2','B',72,'2024-04-18'],['Computer Networks','Quiz 1','A',81,'2024-03-25']];
+const NOTICES=[
+ {t:'End Semester Exam Schedule',d:'The end semester exam will begin from 25th May 2024.',date:'15 May 2024',read:false},
+ {t:'Result Declaration Notice',d:'Results for Mid Semester Exam has been declared.',date:'12 May 2024',read:false},
+ {t:'Project Submission Deadline',d:'Final year project submission is due on 30th May 2024.',date:'10 May 2024',read:false},
+ {t:'Library Hours Extended',d:'The library will stay open until 10 PM during exams.',date:'05 May 2024',read:true}];
+const COURSES=[['CS301','Data Structures','Dr. R. Mehta',4,'92%'],['CS302','Database Management Systems','Prof. S. Iyer',4,'88%'],['CS303','Operating Systems','Dr. A. Khan',3,'80%'],['CS304','Computer Networks','Prof. N. Shah',3,'85%'],['CS305','Software Engineering','Dr. P. Joshi',3,'90%'],['CS306','Web Technologies Lab','Prof. K. Patel',2,'84%']];
+const EXAMS=[['Data Structures','25 May 2024','10:00 AM','Hall A'],['Database Management Systems','27 May 2024','10:00 AM','Hall B'],['Operating Systems','29 May 2024','2:00 PM','Hall A'],['Computer Networks','31 May 2024','10:00 AM','Hall C']];
+const EVENTS={'2024-05-12':'Mid Sem results declared','2024-05-25':'End Sem exams begin','2024-05-30':'Project submission due','2024-05-20':'Today'};
+const DAYS=['Mon','Tue','Wed','Thu','Fri'];
+const TT=[['9-10','DS','DBMS','OS','CN','SE'],['10-11','DBMS','OS','CN','SE','DS'],['11-12','OS','CN','SE','DS','DBMS'],['12-1','Lunch','Lunch','Lunch','Lunch','Lunch'],['1-3','Web Lab','—','Web Lab','—','Seminar']];
+const gcls=g=>g==='B+'||g==='B'?'grade b':'grade';
+const fmt=d=>new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+const unread=()=>NOTICES.filter(n=>!n.read).length;
+let calY=2024,calM=4;
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.i);toast.i=setTimeout(()=>t.classList.remove('show'),2200)}
+function go(p){location.hash=p}
+function resultRows(list){return list.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td><span class="${gcls(r[2])}">${r[2]}</span></td><td>${r[3]}/100</td><td>${fmt(r[4])}</td></tr>`).join('')}
+function resultTable(list){return `<div class="scroll"><table><thead><tr><th>Subject</th><th>Exam Type</th><th>Grade</th><th>Score</th><th>Date</th></tr></thead><tbody>${resultRows(list)}</tbody></table></div>`}
+function noticeList(n){return NOTICES.slice(0,n).map((x,i)=>`<div class="notice ${x.read?'':'unread'}" data-n="${i}"><div class="n">📢</div><div><strong>${x.t}</strong><p>${x.d}</p><em>${x.date}</em></div></div>`).join('')}
+function calHTML(){
+  const first=(new Date(calY,calM,1).getDay()+6)%7,dim=new Date(calY,calM+1,0).getDate(),prev=new Date(calY,calM,0).getDate();
+  let h=DAYS.concat(['Sat','Sun']).map(d=>`<b>${d}</b>`).join('');
+  for(let i=first-1;i>=0;i--)h+=`<span class="off">${prev-i}</span>`;
+  for(let d=1;d<=dim;d++){const k=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,c=[];
+    if(k==='2024-05-20')c.push('today');else if((first+d-1)%7===6)c.push('sun');
+    if(EVENTS[k]&&k!=='2024-05-20')c.push('ev');
+    h+=`<span class="${c.join(' ')}" ${EVENTS[k]?`title="${EVENTS[k]}"`:''}>${d}</span>`}
+  const tail=(7-(first+dim)%7)%7;for(let i=1;i<=tail;i++)h+=`<span class="off">${i}</span>`;
+  return h}
+function calBlock(){
+  const m=new Date(calY,calM).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  return `<div class="cal-nav"><button data-c="-1">‹</button><span>${m}</span><button data-c="1">›</button></div><div class="cal">${calHTML()}</div>`}
+
+const VIEWS={
+dashboard:()=>`
+<section class="welcome"><div><p>Good Morning, 👋</p><h2>Abhishek Verma!</h2><small>Stay updated with your academic journey.</small></div><div class="art">🪴📚</div></section>
+<section class="stats">
+ <div class="card stat" data-go="results"><div class="ico" style="background:#e4eeff">📄</div><div><small>CGPA</small><strong>8.45</strong><span style="color:var(--blue)">Current CGPA</span></div></div>
+ <div class="card stat" data-go="courses"><div class="ico" style="background:#dcf5e5">🎓</div><div><small>Courses Enrolled</small><strong>6</strong><span style="color:var(--green)">This Semester</span></div></div>
+ <div class="card stat" data-go="exams"><div class="ico" style="background:#ece6ff">📋</div><div><small>Exams Completed</small><strong>4</strong><span style="color:var(--purple)">This Semester</span></div></div>
+ <div class="card stat" data-go="results"><div class="ico" style="background:#fff0d6">🏆</div><div><small>Overall Rank</small><strong>12</strong><span style="color:var(--orange)">out of 120</span></div></div>
+ <div class="card stat" data-go="attendance"><div class="ico" style="background:#ffe3e6">📆</div><div><small>Attendance</small><strong>87%</strong><span style="color:var(--red)">This Semester</span></div></div>
+</section>
+<section class="row2">
+ <div class="card"><div class="head"><h3>Recent Results</h3><a data-go="results">View All Results</a></div>${resultTable(RESULTS.slice(0,5))}</div>
+ <div class="card"><div class="head"><h3>Notice Board</h3><a data-go="notices">View All Notices</a></div>${noticeList(3)}</div>
+</section>
+<section class="row3">
+ <div class="card"><div class="head"><h3>Academic Calendar</h3><a data-go="calendar">View Calendar</a></div><div id="calbox">${calBlock()}</div></div>
+ <div class="card"><div class="head"><h3>Quick Access</h3></div><div class="quick">
+  <a data-go="results" style="background:#e8f0ff"><i>📄</i>My Results</a><a data-go="courses" style="background:#e1f6e8"><i>📗</i>My Courses</a>
+  <a data-go="timetable" style="background:#efe9ff"><i>🗓</i>Timetable</a><a data-go="attendance" style="background:#fff1dc"><i>👤</i>Attendance</a>
+  <a data-go="downloads" style="background:#e4eeff"><i>⬇</i>Downloads</a><a data-go="feedback" style="background:#ffe6e9"><i>💬</i>Feedback</a></div></div>
+ <div class="card"><div class="head"><h3>Performance Overview</h3><a data-go="results">View Details</a></div><div class="perf">
+  <div class="donut"><div><strong>84%</strong><small>Overall<br>Performance</small></div></div>
+  <div class="legend"><p><i style="background:#3fae49"></i>Excellent<b>60%</b></p><p><i style="background:#2f6fe0"></i>Good<b>20%</b></p><p><i style="background:#f5b73b"></i>Average<b>12%</b></p><p><i style="background:#ef4f5a"></i>Needs Improvement<b>8%</b></p></div></div></div>
+</section>`,
+profile:()=>`<div class="card"><div class="head"><h3>Student Profile</h3></div><div class="grid3">${[['Name','Abhishek Verma'],['Roll No','21CSE045'],['Programme','B.Tech CSE'],['Year','3rd Year'],['Email','abhishek.verma@college.edu'],['Phone','+91 98765 43210'],['CGPA','8.45'],['Rank','12 / 120']].map(x=>`<div><small style="color:var(--muted)">${x[0]}</small><p style="font-weight:600;margin-top:2px">${x[1]}</p></div>`).join('')}</div></div>`,
+courses:()=>`<div class="card"><div class="head"><h3>Courses Enrolled</h3></div><div class="scroll"><table><thead><tr><th>Code</th><th>Course</th><th>Faculty</th><th>Credits</th><th>Attendance</th></tr></thead><tbody>${COURSES.map(c=>`<tr><td>${c[0]}</td><td>${c[1]}</td><td>${c[2]}</td><td>${c[3]}</td><td>${c[4]}</td></tr>`).join('')}</tbody></table></div></div>`,
+results:()=>`<div class="card"><div class="head"><h3>All Results</h3><div style="display:flex;gap:8px"><select id="rf"><option>All</option><option>Mid Sem</option><option>Quiz 1</option><option>Quiz 2</option></select><button class="btn" id="rcsv">Download CSV</button></div></div><div id="rt">${resultTable(RESULTS)}</div></div>`,
+attendance:()=>`<div class="card"><div class="head"><h3>Attendance by Subject</h3></div><div class="grid3">${COURSES.map(c=>{const v=parseInt(c[4]);return `<div><strong>${c[1]}</strong><p style="color:var(--muted);font-size:11px">${c[4]} present</p><div class="bar"><i style="width:${v}%;background:${v<85?'var(--orange)':'var(--green)'}"></i></div></div>`}).join('')}</div></div>`,
+exams:()=>`<div class="card"><div class="head"><h3>Upcoming End Semester Exams</h3></div><div class="scroll"><table><thead><tr><th>Subject</th><th>Date</th><th>Time</th><th>Venue</th></tr></thead><tbody>${EXAMS.map(e=>`<tr><td>${e[0]}</td><td>${e[1]}</td><td>${e[2]}</td><td>${e[3]}</td></tr>`).join('')}</tbody></table></div></div>`,
+timetable:()=>`<div class="card"><div class="head"><h3>Weekly Timetable</h3></div><div class="scroll"><table class="tt"><thead><tr><th>Time</th>${DAYS.map(d=>`<th>${d}</th>`).join('')}</tr></thead><tbody>${TT.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`,
+notices:()=>`<div class="card"><div class="head"><h3>Notice Board</h3><button class="btn ghost" id="markall">Mark all as read</button></div>${noticeList(NOTICES.length)}</div>`,
+calendar:()=>`<div class="card big"><div class="head"><h3>Academic Calendar</h3></div><div id="calbox">${calBlock()}</div><div style="margin-top:14px;font-size:12px">${Object.entries(EVENTS).filter(e=>e[1]!=='Today').map(e=>`<p>🟠 <b>${fmt(e[0])}</b> — ${e[1]}</p>`).join('')}</div></div>`,
+downloads:()=>`<div class="card"><div class="head"><h3>Downloads</h3></div><div class="grid3">${[['Mid Sem Marksheet','marksheet'],['Semester Timetable','timetable'],['Exam Schedule','exams'],['Attendance Report','attendance']].map(d=>`<div class="card" style="border:1px solid var(--line);box-shadow:none"><p style="font-weight:600;margin-bottom:10px">📄 ${d[0]}</p><button class="btn" data-dl="${d[1]}">Download</button></div>`).join('')}</div></div>`,
+feedback:()=>`<div class="card"><div class="head"><h3>Send Feedback</h3></div><form class="form" id="fb"><label>Rating<div class="stars" id="stars">${[1,2,3,4,5].map(i=>`<span data-s="${i}">★</span>`).join('')}</div></label><label>Subject<input class="f" id="fs" required></label><label>Message<textarea id="fm" rows="4" required></textarea></label><button class="btn" type="submit">Submit feedback</button></form></div>`
+};
+
+function csv(rows){return rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n')}
+function download(name,text){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'}));a.download=name;a.click();toast('Downloaded '+name)}
+const DL={marksheet:()=>csv([['Subject','Exam','Grade','Score','Date'],...RESULTS]),timetable:()=>csv([['Time',...DAYS],...TT]),exams:()=>csv([['Subject','Date','Time','Venue'],...EXAMS]),attendance:()=>csv([['Subject','Attendance'],...COURSES.map(c=>[c[1],c[4]])])};
+
+function renderMenu(p){$('#menu').innerHTML=NAV.map(n=>`<a data-go="${n[0]}" class="${n[0]===p?'active':''}"><span class="ic">${n[2]}</span>${n[1]}</a>`).join('')}
+function renderBadge(){const n=unread(),b=$('#badge');b.textContent=n;b.classList.toggle('zero',!n);
+  $('#bdrop').innerHTML=NOTICES.map((x,i)=>`<a class="${x.read?'':'unread'}" data-n="${i}">${x.t}<small>${x.date}</small></a>`).join('')}
+function render(){
+  const p=VIEWS[location.hash.slice(1)]?location.hash.slice(1):'dashboard';
+  $('#view').innerHTML=VIEWS[p]();renderMenu(p);renderBadge();
+  $('#title').textContent=NAV.find(n=>n[0]===p)[1];window.scrollTo(0,0);
+  document.body.classList.remove('menu-open');
+  if(p==='results'){
+    $('#rf').onchange=e=>{const v=e.target.value;$('#rt').innerHTML=resultTable(v==='All'?RESULTS:RESULTS.filter(r=>r[1]===v))};
+    $('#rcsv').onclick=()=>download('results.csv',DL.marksheet());
+  }
+  if(p==='notices')$('#markall').onclick=()=>{NOTICES.forEach(n=>n.read=true);render();toast('All notices marked as read')};
+  if(p==='feedback'){let r=0;
+    $('#stars').onclick=e=>{const s=e.target.dataset.s;if(!s)return;r=+s;[...$('#stars').children].forEach((c,i)=>c.classList.toggle('on',i<r))};
+    $('#fb').onsubmit=e=>{e.preventDefault();if(!r)return toast('Please add a star rating');e.target.reset();[...$('#stars').children].forEach(c=>c.classList.remove('on'));r=0;toast('Thanks! Feedback submitted')}}
+}
+
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]');if(g){go(g.dataset.go);$('#qdrop').classList.remove('open');return}
+  const n=e.target.closest('[data-n]');if(n){NOTICES[+n.dataset.n].read=true;$('#bdrop').classList.remove('open');if(location.hash!=='#notices')go('notices');else render();return}
+  const c=e.target.closest('[data-c]');if(c){calM+=+c.dataset.c;if(calM<0){calM=11;calY--}if(calM>11){calM=0;calY++}$('#calbox').innerHTML=calBlock();return}
+  const d=e.target.closest('[data-dl]');if(d){download(d.dataset.dl+'.csv',DL[d.dataset.dl]());return}
+  if(e.target.closest('#bell')){$('#bdrop').classList.toggle('open');return}
+  if(!e.target.closest('.searchwrap')){$('#bdrop').classList.remove('open');$('#qdrop').classList.remove('open')}
+});
+$('#burger').onclick=()=>document.body.classList.toggle(innerWidth<=760?'menu-open':'collapsed');
+$('#backdrop').onclick=()=>document.body.classList.remove('menu-open');
+addEventListener('keydown',e=>{if(e.key==='Escape'){document.body.classList.remove('menu-open');$('#modal').classList.remove('open')}});
+addEventListener('resize',()=>{if(innerWidth>760)document.body.classList.remove('menu-open')});
+$('#q').oninput=e=>{
+  const v=e.target.value.trim().toLowerCase(),d=$('#qdrop');if(!v){d.classList.remove('open');return}
+  const hits=[...NAV.filter(n=>n[1].toLowerCase().includes(v)).map(n=>[n[1],'Page',n[0]]),
+    ...COURSES.filter(c=>c[1].toLowerCase().includes(v)||c[2].toLowerCase().includes(v)).map(c=>[c[1],'Course · '+c[2],'courses']),
+    ...NOTICES.filter(x=>x.t.toLowerCase().includes(v)).map(x=>[x.t,'Notice','notices'])];
+  d.innerHTML=hits.length?hits.slice(0,8).map(h=>`<a data-go="${h[2]}">${h[0]}<small>${h[1]}</small></a>`).join(''):'<div class="empty">No matches found</div>';
+  d.classList.add('open')};
+$('#logoutBtn').onclick=()=>{document.body.classList.remove('menu-open');$('#modal').classList.add('open')};
+$('#cancel').onclick=()=>$('#modal').classList.remove('open');
+$('#confirm').onclick=()=>{$('#modal').classList.remove('open');document.body.innerHTML='<div style="margin:auto;text-align:center;padding:40px"><div style="font-size:48px">👋</div><h2>You have been logged out</h2><p style="color:#7a8499;margin:8px 0 18px">See you next time!</p><button class="btn" style="background:#1d5fd8;color:#fff;border:0;border-radius:8px;padding:10px 20px;cursor:pointer" onclick="location.hash=\'\';location.reload()">Log in again</button></div>'};
+function focusables(){document.querySelectorAll('[data-go],[data-n],[data-dl]').forEach(el=>el.tabIndex=0)}
+new MutationObserver(focusables).observe(document.body,{childList:true,subtree:true});focusables();
+addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.matches('[data-go],[data-n],[data-dl]'))e.target.click();
+  if(e.key==='/'&&!e.target.matches('input,textarea,select')){e.preventDefault();$('#q').focus()}
+  if(e.key==='Escape'){$('#qdrop').classList.remove('open');$('#bdrop').classList.remove('open');if(e.target.id==='q')e.target.blur()}});
+addEventListener('hashchange',render);render();
+</script>
+</body>
+</html>
